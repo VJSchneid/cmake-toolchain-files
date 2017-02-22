@@ -15,8 +15,8 @@ set(CMAKE_CROSSCOMPILING 1)
 ##########################################################
 # SKIP COMPILER CHECKS
 ##########################################################
-set(CMAKE_C_COMPILER_WORKS 1)
-set(CMAKE_CXX_COMPILER_WORKS 1)
+set(CMAKE_C_COMPILER_WORKS 1 CACHE INTERNAL "")
+set(CMAKE_CXX_COMPILER_WORKS 1 CACHE INTERNAL "")
 
 ##########################################################
 # FIND MSP430 C COMPILER
@@ -156,8 +156,10 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 # SET TARGET MICROCONTROLLER
 ##########################################################
 function(msp430_set_device MCU)
+    string(TOUPPER ${MCU} MCU)
     set(DEVICE ${MCU} PARENT_SCOPE)
     message(STATUS "Target device: ${DEVICE}")
+    add_definitions(-D__§{DEVICE}__)
 endfunction()
 
 ##########################################################
@@ -221,3 +223,4 @@ function(msp430_add_executable EXECUTABLE)
         msp430_add_executable_upload(${EXECUTABLE})
     endif()
 endfunction()
+
