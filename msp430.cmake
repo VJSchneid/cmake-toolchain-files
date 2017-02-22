@@ -109,6 +109,24 @@ else()
 endif()
 
 ##########################################################
+# FIND MSP430 Flasher
+##########################################################
+if(NOT MSP430_FLASHER)
+    find_program(MSP430_FLASHER msp430-flasher)
+endif()
+if(NOT MSP430_FLASHER)
+    find_program(MSP430_FLASHER msp430flasher)
+endif()
+if(NOT MSP430_FLASHER)
+    find_program(MSP430_FLASHER MSP430Flasher)
+endif()
+if(NOT MSP430_FLASHER)
+    message(STATUS "MSP430 Flasher was not found")
+else()
+    message(STATUS "Found MSP430 Flasher: ${MSP430_FLASHER}")
+endif()
+
+##########################################################
 # FIND MSP430 LIB AND INCLUDE FOLDER
 ##########################################################
 if (NOT MSP430_COMPILER_DIR)
@@ -145,14 +163,14 @@ endfunction()
 ##########################################################
 # COMPILE EXECUTABLE
 ##########################################################
-function(msp430_add_executable EXECUTABLE)
+function(msp430_add_executable_elf EXECUTABLE)
     if(NOT DEVICE)
         message(FATAL_ERROR "No microcontroller declared\nSet microcontroller with DEVICE=MICROCONTROLLER_TYPE")
     endif()
     add_executable(${EXECUTABLE}.elf ${ARGN})
     set_target_properties(${EXECUTABLE}.elf PROPERTIES
-            COMPILE_FLAGS "-I ${MSP430_COMPILER_DIR}/include -mmcu=${DEVICE} -O2 -ffunction-sections -fdata-sections"
-            LINK_FLAGS "-L ${MSP430_COMPILER_DIR}/include -Wl,-gc-sections")
+            COMPILE_FLAGS "-I ${MSP430_COMPILER_DIR}/include -mmcu=${DEVICE} -O2 -g"
+            LINK_FLAGS "-I ${MSP430_COMPILER_DIR}/include -mmcu=${DEVICE} -O2 -L ${MSP430_COMPILER_DIR}/include -g")
     if(MSP430_SIZE)
         add_custom_command(TARGET ${EXECUTABLE}.elf POST_BUILD COMMAND ${MSP430_SIZE} ${EXECUTABLE}.elf)
     endif()
@@ -176,17 +194,19 @@ function(msp430_add_executable_hex EXECUTABLE)
     if (NOT MSP430_OBJCOPY)
         message(FATAL_ERROR "MSP430 objcopy was not found\nSet path with MSP430_OBJCOPY=/path/to/objcopy")
     endif()
-    add_custom_command(TARGET ${EXECUTABLE}.elf POST_BUILD COMMAND
-            ${MSP430_OBJCOPY} -O ihex ${EXECUTABLE}.elf ${EXECUTABLE}.hex)
+    add_custom_target(${EXECUTABLE}.hex COMMAND
+            ${MSP430_OBJCOPY} -O ihex ${EXECUTABLE}.elf ${EXECUTABLE}.hex
+            DEPENDS ${EXECUTABLE}.elf)
 endfunction()
 
 ##########################################################
-# TODO UPLOAD EXECUTABLE
+# UPLOAD EXECUTABLE
 ##########################################################
-#function(msp430_add_executable_upload ${EXECUTABLE})
-#    if(NOT MSP430_GDB)
-#        message(FATAL_ERROR "MSP430 Debugger was not found\nSet debugger path with MSP430_GDB=/path/to/debugger")
-#    endif()
-#    add_custom_target(upload_${EXECUTABLE} COMMAND ${MSP430_GDB} -q rf2500 "prog ${EXECUTABLE_ELF}.elf"
-#            DEPENDS ${EXECUTABLE_ELF})
-#endfunction()
+function(msp430_add_executable_upload EXECUTABLE)
+    if(NOT MSP430_FLASHER)
+        message(FATAL_ERROR "MSP430 Flasher was not found\nSet Flasher path with MSP430_Flasher=/path/to/flasher")
+    endif()
+    add_custom_target(${EXECUTABLE}.upload COMMAND
+            ${MSP430_FLASHER} -n ${DEVICE} -w ${EXECUTABLE}.hex -v -g -z [VCC]
+            DEPENDS ${EXECUTABLE}.hex)
+endfunction()
