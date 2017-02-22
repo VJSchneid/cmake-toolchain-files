@@ -159,7 +159,7 @@ function(msp430_set_device MCU)
     string(TOUPPER ${MCU} MCU)
     set(DEVICE ${MCU} PARENT_SCOPE)
     message(STATUS "Target device: ${DEVICE}")
-    add_definitions(-D__§{DEVICE}__)
+    add_definitions(-D__§{DEVICE}__=1)
 endfunction()
 
 ##########################################################
