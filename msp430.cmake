@@ -210,3 +210,14 @@ function(msp430_add_executable_upload EXECUTABLE)
             ${MSP430_FLASHER} -n ${DEVICE} -w ${EXECUTABLE}.hex -v -g -z [VCC]
             DEPENDS ${EXECUTABLE}.hex)
 endfunction()
+
+##########################################################
+# SIMPLE WAY TO ADD EXECUTABLE
+##########################################################
+function(msp430_add_executable EXECUTABLE)
+    msp430_add_executable_elf(${EXECUTABLE} ${ARGN})
+    msp430_add_executable_hex(${EXECUTABLE})
+    if(MSP430_FLASHER)
+        msp430_add_executable_upload(${EXECUTABLE})
+    endif()
+endfunction()
